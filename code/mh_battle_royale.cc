@@ -1,6 +1,7 @@
 extern "C" {
     #include "cec17.h"
 }
+#include <assert.h>
 #include <iostream>
 #include <vector>
 #include <random>
@@ -117,7 +118,6 @@ double bl_soliswets(vector<double> &sol, double &fitness, double delta, int maxe
   return evals;
 }
 
-
 struct Elemento {
     vector<double> solucion;
     double fitness;
@@ -133,12 +133,13 @@ struct Elemento {
 
 
 auto incrementar_radio (double radio_antiguo) -> double {
-    // NOTE toca juguetear con esto.
-    return radio_antiguo + 5;
+    return radio_antiguo + 2.0;
 }
 
+
+
 template <class Random>
-auto generar_nueva_solucion(int dimension, Random &generador) -> vector<double> {
+auto generar_nueva_solucion (int dimension, Random &generador) -> vector<double> {
     std::uniform_real_distribution<> uniforme_real(-100.0, 100.0);
     vector<double> sol;
 
@@ -147,6 +148,32 @@ auto generar_nueva_solucion(int dimension, Random &generador) -> vector<double> 
     }
 
     return sol;
+}
+
+
+/// Genera ciertas soluciones aleatorias y se queda con las mejores
+template <class Random>
+auto generar_poblacion_inicial (int elementos_poblacion, int aleatorios_a_generar, int dim, Random &generador) -> vector<Elemento> {
+    vector<Elemento> poblacion;
+
+    for (int i = 0; i < aleatorios_a_generar; i++) {
+        auto sol = generar_nueva_solucion(dim, generador);
+
+        poblacion.push_back({
+            .solucion = sol,
+            .fitness = cec17_fitness(&sol[0])
+        });
+    }
+
+    sort(poblacion.begin(), poblacion.end());
+
+    if (aleatorios_a_generar > elementos_poblacion) {
+        poblacion.erase(poblacion.begin() + elementos_poblacion, poblacion.end());
+    }
+
+    assert(poblacion.size() == elementos_poblacion);
+
+    return poblacion;
 }
 
 
@@ -168,44 +195,40 @@ double distancia (const std::vector<T>& a, const std::vector<T>& b) {
 }
 
 
-int main() {
+int main(int argc, char *argv[]) {
     int dim = 10;
+
+    if (argc > 1) {
+        dim = atoi(argv[1]);
+    }
+
     int semilla = 3284723;
     std::uniform_real_distribution<> uniforme_real(-100.0, 100.0);
 
-    const int poblacion_inicial = 10;
-    const int periodo_generacional = 10;    // Cada x número de generaciones, comprobar la distancia entre los elementos.
+    const int poblacion_inicial = 20;
+    const int aleatorios_a_generar = 100;
+
+    const int periodo_generacional = 3;    // Cada x número de generaciones, comprobar la distancia entre los elementos.
     const int evaluaciones_bl_maximas = 100;
-    const double delta = 0.2;
-    double radio = 0.1;
+    const double delta = 0.4;
+
 
     for (int id_funcion = 1; id_funcion <= 30; id_funcion++) {
         cec17_init("MH_battle_royale", id_funcion, dim);
 
         std::mt19937 generador(semilla);
-        vector<Elemento> poblacion;
-        int evaluaciones = 0;
 
-        // Generar población inicial
-        for (int i = 0; i < poblacion_inicial; i++) {
-            auto sol = generar_nueva_solucion(dim, generador);
+        vector<Elemento> poblacion = generar_poblacion_inicial(poblacion_inicial, poblacion_inicial, dim, generador);
+        int evaluaciones = aleatorios_a_generar;
+        double radio = 0.1;
 
-            poblacion.push_back({
-                .solucion = sol,
-                .fitness = cec17_fitness(&sol[0])
-            });
-
-            evaluaciones++;
-        }
+        // Generar población inicial.
+        // Generamos ciertas soluciones iniciales, y nos quedamos con las `poblacion_inicial mejores`.
 
         int t = 1;
         while (evaluaciones < 10000 * dim) {
-            if (poblacion.size() == 1) {
-                break;
-            }
-
             if ((t+1) % periodo_generacional == 0) {
-                //cout << "Generación " << t << ". Elementos restantes: " << poblacion.size() << ". Evaluaciones totales: " << evaluaciones << endl;
+                cout << "F["<< id_funcion << "] Generación " << t << ". Elementos restantes: " << poblacion.size() << ". Radio: " << radio <<  ". Evaluaciones totales: " << evaluaciones << ". Fitness: " << poblacion[0].fitness << endl;
             }
 
             if (t % periodo_generacional == 0) {
@@ -243,9 +266,9 @@ int main() {
                 poblacion.clear();
                 poblacion = conjunto_temporal;
 
-                radio = incrementar_radio(radio);
             }
 
+            radio = incrementar_radio(radio);
 
             // Aplicar la BL a cada una de nuestras soluciones
             for (int i = 0; i < poblacion.size(); i++) {
