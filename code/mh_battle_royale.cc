@@ -133,7 +133,7 @@ struct Elemento {
 
 
 auto incrementar_radio (double radio_antiguo) -> double {
-    return radio_antiguo + 2.0;
+    return radio_antiguo + 2.5;
 }
 
 
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
 
         std::mt19937 generador(semilla);
 
-        vector<Elemento> poblacion = generar_poblacion_inicial(poblacion_inicial, poblacion_inicial, dim, generador);
+        vector<Elemento> poblacion = generar_poblacion_inicial(poblacion_inicial, aleatorios_a_generar, dim, generador);
         int evaluaciones = aleatorios_a_generar;
         double radio = 0.1;
 

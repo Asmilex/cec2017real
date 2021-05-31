@@ -47,7 +47,7 @@ Por ello, simularemos los anillos a la inversa: de cada solución partirá un an
 
 <img align="center" src="./img/Dibujo_anillos.png" alt="Dibujo anillos">
 
-Al final, quedará una única solución (o varias, quedándonos con la mejor), que será la vencedora del algoritmo.
+Al final, quedará una única solución (o varias, y nos quedaremos con la mejor), que será la vencedora del algoritmo.
 
 Con este planteamiento, es muy importante acertar con el esquema evolutivo de la población. Una mala elección de los parámetros puede hacer que esta metaheurística no tenga ningún sentido. Por ejemplo, una tasa baja de crecimiento de los anillos hará que no se combata nunca. O una búsqueda local muy exhaustiva agotará todas las evaluaciones de las que
 disponemos.
@@ -57,7 +57,7 @@ disponemos.
 Una vez hemos planteado las ideas básicas del algoritmo, es hora de pasar a la implementación.
 
 Para la búsqueda local, usaremos la proporcionada por Daniel Molina: la Solis-Wets. Además, debemos definir nuestra función de aumento de radio. Es importante encontrar un buen equilibrio entre el crecimiento del radio y el número de evaluaciones. Si aumentamos demasiado rápido el radio, la población morirá pronto. Si se limita su crecimiento, las soluciones nunca combatirán.
-Como vamos a limitar la BL a 100 evaluaciones por ejecución, en esta primera versión usaremos `radio_antiguo + k`, con `k = 2`. De momento, esto funciona suficientemente bien. Se mantiene el equilibrio que buscábamos de momento. Más tarde investigaremos si merece la pena cambiarla.
+Como vamos a limitar la BL a 100 evaluaciones por ejecución, en esta primera versión usaremos `radio_antiguo + k`, con `k = 2.5`. De momento, esto funciona suficientemente bien. Se mantiene el equilibrio que buscábamos en mayor o menor medida. Más tarde investigaremos si merece la pena cambiarla.
 
 El pseudocódigo sería similar al siguiente:
 
@@ -72,7 +72,7 @@ El pseudocódigo sería similar al siguiente:
 */
 
 incrementar_radio (radio_antiguo) {
-    return radio_antiguo + 2
+    return radio_antiguo + k
 }
 
 
@@ -128,4 +128,85 @@ MH_battle_royale () {
 
     return poblacion[0]     // Contiene solución y fitness.
 }
+```
+
+## Primeros resultados
+
+La primera versión es muy sencilla, y se trata de un optimizador de búsqueda multiarranque básica. No debemos esperar grandes resultados. Para simplificar, únicamente miraremos los resultados al 5, 20, 50 y 100% en estas primeras versiones. Además, evitaré poner toda la información en esta memoria para simplificar. Los archivos con toda la información se encontrarán en el repositorio.
+
+Usando la suite de Tacolab, obtenemos los siguientes resultados:
+
+### Dimensión 10
+
+| Porcentaje | DE | PSO | mh-battle-royale |
+|------------|----|-----|------------------|
+| 5%         | 7  | 10  | 13               |
+| 20%        | 23 | 6   | 1                |
+| 50%        | 21 | 7   | 2                |
+| 100%       | 20 | 8   | 2                |
+
+### Dimensión 30
+
+| Porcentaje | DE | PSO | mh-battle-royale |
+|------------|----|-----|------------------|
+| 5%         | 8  | 3   | 19               |
+| 20%        | 17 | 2   | 11               |
+| 50%        | 23 | 2   | 5                |
+| 100%       | 22 | 3   | 5                |
+
+### Dimensión 50
+
+| Porcentaje | DE | PSO | mh-battle-royale |
+|------------|----|-----|------------------|
+| 5%         | 8  | 4   | 18               |
+| 20%        | 14 | 1   | 15               |
+| 50%        | 17 | 2   | 11               |
+| 100%       | 21 | 2   | 7                |
+
+### Conclusiones versión 1
+
+De momento, los resultados no son muy prometedores. Claramente el algoritmo no rinde bien, y se queda atascado. Aunque al inicio se consigan mejores resultados, conforme aumenta el número de evaluaciones, las soluciones no mejoran. Debemos hacer algo para arreglar esto.
+
+## La necesidad de optimizar
+
+> A partir de ahora, se documentará únicamente las mejoras que se realicen. Cuando lleguemos al final, recopilaremos todos los datos, mostrando los resultados cumulativos de estas optimizaciones.
+
+Algunos de los motivos por los que pueda estar fallando nuestro algoritmo es por la falta de diversificación. Aunque partimos de varias soluciones, muchas veces nos quedamos atrancados en óptimos locales. Además, un crecimiento del radio lineal no asegura que al final quede una única solución. Por último, podríamos intentar partir de mejores soluciones, para que la búsqueda proporcione resultados más prometedores.
+
+### Versión 2: sondeando el terreno
+
+Desarrollemos la idea del último punto. Para no empezar en situaciones que no nos garantizan nada, modificaremos la generación de soluciones inicial para quedarnos con las mejores. Eso debería reducir el número de evaluaciones necesarias hasta llegar a un mínimo local.
+
+```
+──────────────────────────────────────────────────────────────── VERSION 2 ─────
+
+generar_poblacion_inicial(elementos_poblacion, aleatorios_a_generar, dim) {
+    for (_ in 0 .. aleatorios_a_generar) {
+        poblacion.push(
+            generar_nueva_solucion(dim)
+        )
+    }
+
+    poblacion.sort()
+    poblacion.erase(poblacion.begin() + elementos_poblacion, poblacion.end())
+
+    return poblacion
+}
+
+
+MH_battle_royale () {
+    // ─────────────────────────────────────────────────────────── PARAMETROS ─────
+
+    ...
+
+    poblacion_inicial = 20
+    const int aleatorios_a_generar = 100;
+
+    poblacion = generar_poblacion_inicial(poblacion_inicial, aleatorios_a_generar, dim, generador)
+    evaluaciones = aleatorios_a_generar
+
+    ...
+
+    // ────────────────────────────────────────────────────── BUCLE PRINCIPAL ─────
+    ...
 ```
