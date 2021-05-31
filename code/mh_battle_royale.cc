@@ -202,7 +202,6 @@ int main(int argc, char *argv[]) {
         dim = atoi(argv[1]);
     }
 
-    int semilla = 3284723;
     std::uniform_real_distribution<> uniforme_real(-100.0, 100.0);
 
     const int poblacion_inicial = 20;
@@ -216,9 +215,9 @@ int main(int argc, char *argv[]) {
     for (int id_funcion = 1; id_funcion <= 30; id_funcion++) {
         cec17_init("MH_battle_royale", id_funcion, dim);
 
-        std::mt19937 generador(semilla);
+        std::mt19937 generador;
 
-        vector<Elemento> poblacion = generar_poblacion_inicial(poblacion_inicial, aleatorios_a_generar, dim, generador);
+        vector<Elemento> poblacion = generar_poblacion_inicial(poblacion_inicial, poblacion_inicial, dim, generador);
         int evaluaciones = aleatorios_a_generar;
         double radio = 0.1;
 
