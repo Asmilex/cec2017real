@@ -243,7 +243,7 @@ int main(int argc, char *argv[]) {
 
     std::uniform_real_distribution<> uniforme_real(-100.0, 100.0);
 
-    const int poblacion_inicial = 20;
+    const int poblacion_inicial = 25;
     const int aleatorios_a_generar = 100;
 
     const int periodo_generacional = 3;    // Cada x número de generaciones, comprobar la distancia entre los elementos.
@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
         int t = 1;
         while (evaluaciones < 10000 * dim) {
             if ((t+1) % periodo_generacional == 0) {
-                cout << "F["<< id_funcion << "] Generación " << t << ". Elementos restantes: " << poblacion.size() << ". Radio: " << radio <<  ". Evaluaciones totales: " << evaluaciones << ". Fitness: " << poblacion[0].fitness << endl;
+                //cout << "F["<< id_funcion << "] Generación " << t << ". Elementos restantes: " << poblacion.size() << ". Radio: " << radio <<  ". Evaluaciones totales: " << evaluaciones << ". Fitness: " << poblacion[0].fitness << endl;
             }
 
             if (t % periodo_generacional == 0) {
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
                     }
 
                     radio = radio/5;
-                    cout << "\t -> Restock de población <-" << endl;
+                    //cout << "\t -> Restock de población <-" << endl;
                 }
                 else if (poblacion.size() > 1) {
                     bool hay_cambios = true;
