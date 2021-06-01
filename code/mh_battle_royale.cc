@@ -133,7 +133,7 @@ struct Elemento {
 
 
 auto incrementar_radio (double radio_antiguo) -> double {
-    return radio_antiguo + 2.5;
+    return radio_antiguo * 1.1 + 1;
 }
 
 
@@ -195,6 +195,45 @@ double distancia (const std::vector<T>& a, const std::vector<T>& b) {
 }
 
 
+template <class Random>
+auto mutar(Elemento original, Random &generador) -> Elemento {
+    std::uniform_real_distribution<> uniforme_real(-100.0, 100.0);
+    std::uniform_int_distribution<> uniforme_discreta(0, original.solucion.size()-1);
+    std::uniform_int_distribution<> uniforme_discreta_segmento(original.solucion.size()/2, original.solucion.size()-1);
+
+    Elemento s;
+    s.solucion = original.solucion;
+
+    int inicio_segmento = uniforme_discreta(generador);
+    int tamano_segmento = uniforme_discreta_segmento(generador);
+
+    auto i = inicio_segmento;
+    auto copias = 0;
+
+    while (copias < tamano_segmento) {
+        s.solucion[i] = original.solucion[i];
+
+        i = (i+1) % s.solucion.size();
+
+        copias++;
+    }
+
+    while (true) {
+        s.solucion[i] = uniforme_real(generador);
+
+        i = (i+1) % s.solucion.size();
+
+        if (i == inicio_segmento) {
+            break;
+        }
+    }
+
+    s.fitness = cec17_fitness(&s.solucion[0]);
+
+    return s;
+}
+
+
 int main(int argc, char *argv[]) {
     int dim = 10;
 
@@ -210,6 +249,7 @@ int main(int argc, char *argv[]) {
     const int periodo_generacional = 3;    // Cada x número de generaciones, comprobar la distancia entre los elementos.
     const int evaluaciones_bl_maximas = 100;
     const double delta = 0.4;
+    const double radio_inicial = 0.1;
 
 
     for (int id_funcion = 1; id_funcion <= 30; id_funcion++) {
@@ -217,9 +257,9 @@ int main(int argc, char *argv[]) {
 
         std::mt19937 generador;
 
-        vector<Elemento> poblacion = generar_poblacion_inicial(poblacion_inicial, poblacion_inicial, dim, generador);
+        vector<Elemento> poblacion = generar_poblacion_inicial(poblacion_inicial, aleatorios_a_generar, dim, generador);
         int evaluaciones = aleatorios_a_generar;
-        double radio = 0.1;
+        double radio = radio_inicial;
 
         // Generar población inicial.
         // Generamos ciertas soluciones iniciales, y nos quedamos con las `poblacion_inicial mejores`.
@@ -231,40 +271,41 @@ int main(int argc, char *argv[]) {
             }
 
             if (t % periodo_generacional == 0) {
-                vector<Elemento> conjunto_temporal (poblacion);     // Para evitar repetidos
+                if (poblacion.size() == 1) {
+                    for (int i = 1; i < poblacion_inicial; i++) {
+                        poblacion.push_back(mutar(poblacion[0], generador));
+                    }
 
-                // Comprobar aquellos que se encuentran cerca
-                for (int i = 0; i < poblacion.size(); i++) {
-                    for (int j = 0; j < poblacion.size(); j++) {
-                        if (i != j && distancia(poblacion[i].solucion, poblacion[j].solucion) < radio) {
-                            //cout << "Elementos cercanos: " << i << ", " << j << endl;
-                            // Están suficientemente cerca => nos cargamos la peor.
-                            Elemento peor_sol;
+                    radio = radio/5;
+                    cout << "\t -> Restock de población <-" << endl;
+                }
+                else if (poblacion.size() > 1) {
+                    bool hay_cambios = true;
+                    int a_eliminar = -1;
 
-                            if (poblacion[i] < poblacion[j]) {
-                                peor_sol = poblacion[j];
-                            }
-                            else {
-                                peor_sol = poblacion[i];
-                            }
+                    while (hay_cambios) {
+                        hay_cambios = false;
 
-                            conjunto_temporal.erase(
-                                std::remove_if(
-                                    conjunto_temporal.begin(),
-                                    conjunto_temporal.end(),
-                                    [&peor_sol](Elemento const & s) {
-                                        return s == peor_sol;
+                        for (int i = 0; i < poblacion.size() && !hay_cambios; i++) {
+                            for (int j = 0; j < poblacion.size() && !hay_cambios; j++) {
+                                if (i != j && distancia(poblacion[i].solucion, poblacion[j].solucion) < radio) {
+                                    hay_cambios = true;
+
+                                    if (poblacion[i] < poblacion[j]) {
+                                        a_eliminar = j;
                                     }
-                                ),
-                                conjunto_temporal.end()
-                            );
+                                    else {
+                                        a_eliminar = i;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (hay_cambios) {
+                            poblacion.erase(poblacion.begin() + a_eliminar);
                         }
                     }
                 }
-
-                poblacion.clear();
-                poblacion = conjunto_temporal;
-
             }
 
             radio = incrementar_radio(radio);
