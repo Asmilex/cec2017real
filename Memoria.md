@@ -275,7 +275,7 @@ Finalmente, analizaremos los resultados obtenidos tras todas estas mejoras. Esta
 
 ### Dimensión 10
 
-| **Evaluaciones** | **DE** | **MH Batt;e Royale** | **PSO** |
+| **Evaluaciones** | **DE** | **MH Battle Royale** | **PSO** |
 |:-----------------|-------:|---------------------:|--------:|
 | 1%               |      3 |                   20 |       7 |
 | 2%               |      4 |                   16 |      10 |
