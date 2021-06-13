@@ -18,6 +18,8 @@ Ignorando esta crítica, nosotros intentaremos producir una nueva usando como ba
 
 Introduciremos una propuesta de metaheurística basada en los videojuegos del tipo *battle royale*. Mostraremos una versión inicial, y la mejoraremos poco a poco. Concluiremos con un análisis de resultados y propuestas finales.
 
+El repositorio con el código de la práctica se encuentra en [Asmilex/cec2017real](http://github.com/asmilex/cec2017real). El zip entregado contendrá una presentación, esta memoria, así como una copia de lo que se encontraba en el repositorio en el isntante de la entrega.
+
 
 * * *
 
@@ -353,6 +355,8 @@ No obstante, se necesita mejorar el rendimiento claramente, pues la mayor parte 
 En la dimensión 30, se observa un resultado parecido al anterior. Sin embargo, ahora en las últimas fases no se mejora tanto. Podemos ver cómo a partir del 20% de evaluaciones no se avanza lo suficiente como para superar a Differential Evolution.
 
 Debemos destacar positivamente la mejora que hay con respecto a la primera implementación. De ser la mejor en 3 de las 30 funciones, ha pasado a ganar en 8 de las 30. No obstante, sigue siendo un resultado algo mediocre.
+
+* * *
 
 ### Conclusiones
 
